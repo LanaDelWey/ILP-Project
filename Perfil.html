@@ -23,75 +23,47 @@
       <h2 id="form-title" class="form-card__title">User Information</h2>
 
       <form id="profileForm" class="profile-form" novalidate>
-        
+
         <!-- Profile Photo -->
         <div class="field field--photo">
           <label for="photo" class="photo-label">Profile Picture</label>
-          <div class="photo-preview" id="photoPreview" title="Preview">
+          <div class="photo-preview" title="Preview">
             <img id="previewImg" src="assets/avatar-placeholder.png" alt="Profile picture preview" />
-            <button type="button" id="removePhoto" class="btn ghost small" aria-label="Remove photo" title="Remove photo">✕</button>
+            <button type="button" id="removePhoto" class="btn ghost small" aria-label="Remove photo">✕</button>
           </div>
-          <input type="file" id="photo" name="photo" accept="image/*" class="file-input" />
+          <input type="file" id="photo" accept="image/*" class="file-input" />
           <small class="hint">PNG or JPG. Recommended size: 400×400px.</small>
         </div>
 
         <!-- First Name -->
         <div class="field">
           <label for="firstName">First Name</label>
-          <input
-            id="firstName"
-            name="firstName"
-            type="text"
-            placeholder="e.g. Ana María"
-            required
-          />
+          <input id="firstName" type="text" placeholder="e.g. Ana María" required />
         </div>
 
         <!-- Last Name -->
         <div class="field">
           <label for="lastName">Last Name</label>
-          <input
-            id="lastName"
-            name="lastName"
-            type="text"
-            placeholder="e.g. Pérez López"
-            required
-          />
+          <input id="lastName" type="text" placeholder="e.g. Pérez López" required />
         </div>
 
         <!-- Corporate Email -->
         <div class="field">
           <label for="email">Corporate Email</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="yourEmployee.ID@tcs.com"
-            required
-          />
+          <input id="email" type="email" placeholder="yourEmployee.ID@tcs.com" required />
           <small class="hint">Use your corporate email address.</small>
         </div>
 
         <!-- Hobbies -->
         <div class="field">
           <label for="hobbies">Hobbies (comma separated)</label>
-          <input
-            id="hobbies"
-            name="hobbies"
-            type="text"
-            placeholder="Reading, football, photography"
-          />
+          <input id="hobbies" type="text" placeholder="Reading, football, photography" />
         </div>
 
-        <!-- Work Location / Department -->
+        <!-- Work Location -->
         <div class="field">
           <label for="location">Work Location / Department</label>
-          <input
-            id="location"
-            name="location"
-            type="text"
-            placeholder="e.g. Tata 4"
-          />
+          <input id="location" type="text" placeholder="e.g. Tata 4" />
         </div>
 
         <!-- Actions -->
@@ -108,28 +80,58 @@
   </main>
 
   <script>
-    // Image preview handling
+    const form = document.getElementById('profileForm');
+
+    const firstNameInput = document.getElementById('firstName');
+    const lastNameInput = document.getElementById('lastName');
+    const emailInput = document.getElementById('email');
+    const hobbiesInput = document.getElementById('hobbies');
+    const locationInput = document.getElementById('location');
+
     const photoInput = document.getElementById('photo');
     const previewImg = document.getElementById('previewImg');
     const removePhotoBtn = document.getElementById('removePhoto');
     const defaultSrc = previewImg.getAttribute('src');
 
-    photoInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
+    /* Load saved data */
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedProfile = localStorage.getItem('profileData');
+      const savedPhoto = localStorage.getItem('profilePhoto');
+
+      if (savedProfile) {
+        const data = JSON.parse(savedProfile);
+        firstNameInput.value = data.firstName || '';
+        lastNameInput.value = data.lastName || '';
+        emailInput.value = data.email || '';
+        hobbiesInput.value = data.hobbies || '';
+        locationInput.value = data.location || '';
+      }
+
+      if (savedPhoto) {
+        previewImg.src = savedPhoto;
+      }
+    });
+
+    /* Image preview + save */
+    photoInput.addEventListener('change', () => {
+      const file = photoInput.files[0];
       if (!file || !file.type.startsWith('image/')) return;
 
       const reader = new FileReader();
-      reader.onload = () => previewImg.src = reader.result;
+      reader.onload = () => {
+        previewImg.src = reader.result;
+        localStorage.setItem('profilePhoto', reader.result);
+      };
       reader.readAsDataURL(file);
     });
 
     removePhotoBtn.addEventListener('click', () => {
       previewImg.src = defaultSrc;
       photoInput.value = '';
+      localStorage.removeItem('profilePhoto');
     });
 
-    // Form validation and demo submit
-    const form = document.getElementById('profileForm');
+    /* Submit + save data */
     form.addEventListener('submit', (e) => {
       e.preventDefault();
 
@@ -138,27 +140,24 @@
         return;
       }
 
-      const data = {
-        firstName: form.firstName.value.trim(),
-        lastName: form.lastName.value.trim(),
-        email: form.email.value.trim(),
-        hobbies: form.hobbies.value
-          .split(',')
-          .map(h => h.trim())
-          .filter(Boolean),
-        location: form.location.value.trim()
+      const profileData = {
+        firstName: firstNameInput.value.trim(),
+        lastName: lastNameInput.value.trim(),
+        email: emailInput.value.trim(),
+        hobbies: hobbiesInput.value.trim(),
+        location: locationInput.value.trim()
       };
 
-      console.log('Valid form data:', data);
-      alert('Profile successfully created (demo). Check the console for details.');
-      // Here you would send the data to your backend
+      localStorage.setItem('profileData', JSON.stringify(profileData));
+      alert('Profile saved successfully!');
     });
 
-    // Cancel action
+    /* Cancel */
     document.getElementById('cancelBtn').addEventListener('click', () => {
-      if (confirm('Do you want to cancel profile creation? All changes will be lost.')) {
+      if (confirm('Do you want to cancel profile creation? All data will be cleared.')) {
         form.reset();
         previewImg.src = defaultSrc;
+        localStorage.clear();
       }
     });
   </script>
